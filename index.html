@@ -1984,46 +1984,51 @@
                 const context = canvas.getContext('2d');
                 const statusDiv = document.getElementById('scanStatus');
 
-                // طلب إذن الكاميرا
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment' // الكاميرا الخلفية
-                    }
-                });
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    statusDiv.textContent = 'المتصفح لا يدعم الكاميرا';
+                    return;
+                }
 
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
                 isScanning = true;
-                statusDiv.textContent = 'جاري البحث عن QR Code...';
 
-                // مسح QR Code كل 500ms
-                const scanInterval = setInterval(() => {
-                    if (!isScanning) {
-                        clearInterval(scanInterval);
-                        return;
-                    }
+                // انتظر حتى تصبح الكاميرا جاهزة فعليًا
+                video.onloadedmetadata = () => {
+                    video.play();
 
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    statusDiv.textContent = 'جاري البحث عن QR Code...';
 
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
-
-                    if (qrCode && qrCode.data) {
-                        try {
-                            scannedData = JSON.parse(qrCode.data);
-                            displayScannedData(scannedData);
+                    const scanInterval = setInterval(() => {
+                        if (!isScanning) {
                             clearInterval(scanInterval);
-                            stopCamera(stream);
-                        } catch (e) {
-                            statusDiv.textContent = 'QR Code غير صالح، جاري المحاولة مرة أخرى...';
+                            return;
                         }
-                    }
-                }, 500);
 
-            } catch (error) {
-                document.getElementById('scanStatus').textContent = 'خطأ في تشغيل الكاميرا: ' + error.message;
-                console.error('Camera error:', error);
+                        if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+
+                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                        if (code && code.data) {
+                            try {
+                                scannedData = JSON.parse(code.data);
+                                displayScannedData(scannedData);
+                                clearInterval(scanInterval);
+                                stopCamera(stream);
+                            } catch (e) {
+                                statusDiv.textContent = 'QR غير صالح، إعادة المحاولة...';
+                            }
+                        }
+                    }, 500);
+                };
+            } catch (err) {
+                document.getElementById('scanStatus').textContent = 'فشل في تشغيل الكاميرا: ' + err.message;
+                console.error(err);
             }
         }
 
@@ -2044,13 +2049,13 @@
             statusDiv.textContent = 'تم قراءة QR Code بنجاح!';
 
             const summary = `
-        <strong>بيانات مقروءة من QR Code:</strong><br>
-        عدد المرشحين: ${Object.keys(data.candidates || {}).length}<br>
-        الأصوات الصحيحة: ${data.totalVoteSets || 0}<br>
-        الأصوات الباطلة: ${data.invalidVotesCount || 0}<br>
-        وقت الإنتاج: ${new Date(data.timestamp).toLocaleString('ar-EG')}<br>
-        <small style="color: #666;">اضغط "دمج البيانات" لإضافتها للنتائج الحالية</small>
-    `;
+                <strong>بيانات مقروءة من QR Code:</strong><br>
+                عدد المرشحين: ${Object.keys(data.candidates || {}).length}<br>
+                الأصوات الصحيحة: ${data.totalVoteSets || 0}<br>
+                الأصوات الباطلة: ${data.invalidVotesCount || 0}<br>
+                وقت الإنتاج: ${new Date(data.timestamp).toLocaleString('ar-EG')}<br>
+                <small style="color: #666;">اضغط "دمج البيانات" لإضافتها للنتائج الحالية</small>
+            `;
 
             resultDiv.innerHTML = summary;
             resultDiv.style.display = 'block';
