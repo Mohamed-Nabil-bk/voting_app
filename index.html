@@ -3,866 +3,1579 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام فرز الأصوات</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام فرز الأصوات الانتخابية</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.js"></script>
     <style>
-        @media (max-width: 640px) {
+        .btn,
+        .container {
+            overflow: hidden
+        }
 
-            .fa-check,
-            .fa-times,
-            .fa-undo-alt,
-            .fa-redo-alt,
-            .fa-trash-alt,
-            .fa-file-export,
-            .fa-save,
-            .fa-upload,
-            .fa-users,
-            .fa-ban {
-                margin-right: 2px;
-                font-size: 0.9em;
-            }
+        .btn-info:hover,
+        .btn-primary:hover,
+        .btn-secondary:hover,
+        .btn-success:hover,
+        .btn-warning:hover {
+            transform: translateY(-2px)
+        }
+
+        .btn::before,
+        .modal {
+            top: 0;
+            height: 100%;
+            width: 100%
+        }
+
+        .header,
+        .modal-header,
+        .stat-card {
+            text-align: center
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html {
+            font-size: 16px
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0, #764ba2 100%);
+            min-height: 100vh;
+            padding: clamp(10px, 2vw, 20px);
+            line-height: 1.6
         }
 
-        .hidden {
-            display: none !important;
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: clamp(8px, 1.5vw, 15px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .1)
         }
 
-        /* تحسين مظهر الأزرار المعطلة */
-        button:disabled {
-            opacity: 0.5;
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #fff;
+            padding: clamp(20px, 4vw, 30px)
+        }
+
+        .candidates-table tr:hover,
+        .section {
+            background: #f8f9fa
+        }
+
+        .header p {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, .3)
+        }
+
+        .main-content {
+            padding: clamp(15px, 3vw, 30px)
+        }
+
+        .section {
+            margin-bottom: clamp(15px, 2.5vw, 25px);
+            padding: clamp(15px, 3vw, 25px);
+            border-radius: clamp(8px, 1vw, 12px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .05);
+            border-right: 5px solid #667eea
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            margin-bottom: clamp(15px, 2vw, 20px);
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+            gap: clamp(8px, 1vw, 10px);
+            flex-wrap: wrap
+        }
+
+        .alert,
+        .btn,
+        .input-group label,
+        .stat-label {
+            font-size: clamp(.9rem, 1.5vw, 1rem)
+        }
+
+        .input-group label,
+        .stat-number {
+            margin-bottom: clamp(6px, 1vw, 8px)
+        }
+
+        .section-title::before {
+            content: "📊";
+            font-size: 1.2em
+        }
+
+        .button-group {
+            display: flex;
+            gap: clamp(10px, 2vw, 15px);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: clamp(15px, 2vw, 20px)
+        }
+
+        .btn {
+            padding: clamp(10px, 1.5vw, 12px) clamp(20px, 3vw, 25px);
+            border: none;
+            border-radius: clamp(6px, 1vw, 8px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: .3s;
+            display: flex;
+            align-items: center;
+            gap: clamp(6px, 1vw, 8px);
+            min-width: clamp(120px, 20vw, 150px);
+            justify-content: center;
+            flex: 1 1 auto;
+            max-width: 200px;
+            position: relative
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            left: -100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2), transparent);
+            transition: left .6s
+        }
+
+        .btn:hover::before {
+            left: 100%
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0, #764ba2 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, .2)
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(102, 126, 234, .4)
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffecd2 0, #fcb69f 100%);
+            color: #8b4513;
+            box-shadow: 0 4px 15px rgba(252, 182, 159, .3)
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 8px 25px rgba(252, 182, 159, .5)
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4ecdc4 0, #44a08d 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, .3)
+        }
+
+        .btn-info:hover {
+            box-shadow: 0 8px 25px rgba(78, 205, 196, .5)
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff9a9e 0, #fecfef 100%);
+            color: #8b1538;
+            box-shadow: 0 4px 15px rgba(255, 154, 158, .3)
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 154, 158, .5)
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #a8edea 0, #fed6e3 100%);
+            color: #4a5568;
+            box-shadow: 0 4px 15px rgba(168, 237, 234, .3)
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(168, 237, 234, .5)
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #84fab0 0, #8fd3f4 100%);
+            color: #2d5a27;
+            box-shadow: 0 4px 15px rgba(132, 250, 176, .3)
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 8px 25px rgba(132, 250, 176, .5)
+        }
+
+        .btn:disabled {
+            opacity: .6;
             cursor: not-allowed;
+            transform: none !important;
+            background: linear-gradient(135deg, #e2e8f0 0, #cbd5e0 100%) !important;
+            color: #a0aec0 !important;
+            box-shadow: none !important
         }
 
-        /* منع التحديد المزدوج عند النقر السريع على الأزرار */
-        button {
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .2)
+        }
+
+        @media (max-width:768px) {
+            .btn {
+                min-width: clamp(100px, 25vw, 140px);
+                padding: clamp(12px, 2vw, 14px) clamp(16px, 2.5vw, 20px)
+            }
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+            gap: clamp(15px, 2vw, 20px)
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            padding: clamp(20px, 3vw, 25px);
+            border-radius: clamp(8px, 1vw, 12px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, .3);
+            transition: transform .3s
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px)
+        }
+
+        .stat-number {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 700
+        }
+
+        .stat-label {
+            opacity: .9
+        }
+
+        .alert {
+            padding: clamp(12px, 2vw, 15px);
+            border-radius: clamp(6px, 1vw, 8px);
+            margin-bottom: clamp(15px, 2vw, 20px);
+            display: none;
+            font-weight: 500
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-right: 4px solid #e53935
+        }
+
+        .alert-success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-right: 4px solid #4caf50
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            background-color: rgba(0, 0, 0, .5);
+            padding: clamp(10px, 2vw, 20px)
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: clamp(5%, 10vh, 15%) auto;
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: clamp(8px, 1vw, 12px);
+            width: 100%;
+            max-width: min(500px, 95vw);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .3);
+            max-height: 90vh;
+            overflow-y: auto
+        }
+
+        .modal-header {
+            font-size: clamp(1.3rem, 2.5vw, 1.5rem);
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: clamp(15px, 2vw, 20px)
+        }
+
+        .candidates-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: clamp(15px, 2vw, 20px);
+            background: #fff;
+            border-radius: clamp(6px, 1vw, 8px);
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
+            font-size: clamp(.8rem, 1.2vw, 1rem)
+        }
+
+        .candidates-table td,
+        .candidates-table th {
+            padding: clamp(10px, 2vw, 15px);
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1
+        }
+
+        .candidates-table th {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: #fff;
+            font-weight: 600
+        }
+
+        @media (max-width:575.98px) {
+
+            .stats-container,
+            .voting-form {
+                grid-template-columns: 1fr
+            }
+
+            .button-group {
+                flex-direction: column
+            }
+
+            .btn {
+                max-width: none;
+                min-width: auto
+            }
+
+            .candidates-table {
+                font-size: .8rem
+            }
+
+            .candidates-table td,
+            .candidates-table th {
+                padding: 8px 5px
+            }
+        }
+
+        @media (min-width:576px) and (max-width:767.98px) {
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        @media (min-width:768px) and (max-width:991.98px) {
+
+            .stats-container,
+            .voting-form {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        @media (min-width:992px) and (max-width:1199.98px) {
+
+            .stats-container,
+            .voting-form {
+                grid-template-columns: repeat(3, 1fr)
+            }
+        }
+
+        @media (min-width:1200px) {
+
+            .stats-container,
+            .voting-form {
+                grid-template-columns: repeat(4, 1fr)
+            }
+        }
+
+        @media (min-width:1400px) {
+            .container {
+                max-width: 1400px
+            }
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0
+            }
+
+            .container {
+                box-shadow: none;
+                border-radius: 0
+            }
+
+            .btn,
+            .modal {
+                display: none !important
+            }
+        }
+
+        @media (-webkit-min-device-pixel-ratio:2),
+        (min-resolution:192dpi) {
+            .header p {
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, .3)
+            }
+        }
+
+        @media (max-width:767.98px) and (orientation:landscape) {
+            .modal-content {
+                margin: 2% auto;
+                max-height: 95vh
+            }
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            * {
+                animation-duration: 0s !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0s !important
+            }
+
+            .btn:hover,
+            .stat-card:hover {
+                transform: none
+            }
+        }
+
+        .btn:focus-visible,
+        .input-group input:focus-visible,
+        .input-group select:focus-visible {
+            outline: #667eea solid 3px;
+            outline-offset: 2px
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0
+        }
+
+        .voting-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+            gap: clamp(15px, 2vw, 20px)
+        }
+
+        .voting-form .input-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 0
+        }
+
+        .voting-form .input-group label {
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 8px
+        }
+
+        .voting-form .input-group input,
+        .voting-form .input-group select {
+            padding: clamp(10px, 1.5vw, 12px) clamp(12px, 2vw, 15px);
+            border: 2px solid #ddd;
+            border-radius: clamp(6px, 1vw, 8px);
+            font-size: clamp(.9rem, 1.5vw, 1rem);
+            transition: .3s;
+            background: #fff;
+            width: 100%
+        }
+
+        .voting-form .input-group input:focus,
+        .voting-form .input-group select:focus {
+            outline: 0;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, .1)
+        }
+
+        .vote-recording {
+            max-width: 600px;
+            margin: 20px auto
+        }
+
+        .vote-recording .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            transition: .3s
+        }
+
+        .vote-recording .input-group:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, .15)
+        }
+
+        .vote-recording .input-group:focus-within {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, .1);
+            transform: scale(1.01)
+        }
+
+        .vote-recording .input-group label {
+            background-color: #f8f9fa;
+            padding: 12px 20px;
+            margin: 0;
+            font-weight: 600;
+            color: #495057;
+            border-right: 1px solid #ddd;
+            white-space: nowrap;
+            min-width: 100px;
+            text-align: left;
+            font-size: 14px
+        }
+
+        .vote-recording .input-group input {
+            flex: 1;
+            border: none;
+            padding: 12px 15px;
+            font-size: 16px;
+            outline: 0;
+            background: 0 0;
+            color: #495057
+        }
+
+        .vote-recording .input-group input:focus {
+            background-color: #f8f9ff
+        }
+
+        .vote-recording .input-group input::placeholder {
+            color: #adb5bd;
+            opacity: 1
+        }
+
+        .vote-recording.colored .input-group:nth-child(odd) label {
+            background-color: #e3f2fd
+        }
+
+        .vote-recording.colored .input-group:nth-child(2n) label {
+            background-color: #f3e5f5
+        }
+
+        @media screen and (max-width:768px) {
+            .vote-recording .input-group label {
+                min-width: 70px;
+                padding: 10px 12px;
+                font-size: 13px
+            }
+
+            .vote-recording .input-group input {
+                padding: 10px 12px;
+                font-size: 16px
+            }
+        }
+
+        /* أزرار إنهاء التصويت */
+        .btn-finish {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .btn-finish:hover {
+            background: linear-gradient(45deg, #218838, #1ea085);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+        }
+
+        .btn-scan {
+            background: linear-gradient(45deg, #007bff, #6610f2);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .btn-scan:hover {
+            background: linear-gradient(45deg, #0056b3, #520dc2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
+        }
+
+        /* تنسيق QR Canvas */
+        #qrCanvas {
+            border: 3px solid #e9ecef;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            background: white;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* معلومات QR */
+        #qrInfo {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: right;
+            border: 1px solid #dee2e6;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        #qrInfo strong {
+            color: #495057;
+            font-size: 1.1rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        #qrSummary {
+            line-height: 1.6;
+            color: #6c757d;
+        }
+
+        /* تنسيق الفيديو */
+        #qrVideo {
+            border: 3px solid #dee2e6;
+            border-radius: 15px;
+            background: #000;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* حالة المسح */
+        #scanStatus {
+            margin: 20px 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        /* نتيجة المسح */
+        #scanResult {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: right;
+            border: 1px solid #c3e6cb;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* التجاوب للشاشات الصغيرة */
+        @media (max-width: 768px) {
+
+
+            .btn-finish,
+            .btn-scan {
+                min-width: 150px;
+                padding: 12px 20px;
+                font-size: 1rem;
+                margin: 5px;
+            }
+
+            #qrCanvas {
+                max-width: 280px;
+                margin: 15px 0;
+            }
+
+            #qrVideo {
+                max-width: 300px;
+            }
+
+            #qrInfo,
+            #scanResult {
+                padding: 15px;
+                margin: 10px 0;
+            }
+
+
+        }
+
+        @media (max-width: 480px) {
+
+            .btn-finish,
+            .btn-scan {
+                min-width: 120px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+
+            #qrCanvas {
+                max-width: 250px;
+            }
+
+            #qrVideo {
+                max-width: 250px;
+            }
+
+            #qrInfo strong {
+                font-size: 1rem;
+            }
+
+            #scanStatus {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* تأثيرات إضافية للتفاعل */
+        .btn-finish:active,
+        .btn-scan:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* تحسين عرض النص في الشاشات الصغيرة */
+        @media (max-width: 768px) {
+
+            #qrInfo,
+            #scanResult {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* تأثير التحميل */
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-2 sm:p-4">
-    <div id="app"
-        class="p-3 sm:p-4 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg bg-white rounded-lg shadow-lg mt-2 sm:mt-6">
-        <h1 class="text-xl sm:text-2xl font-bold text-center mb-2 sm:mb-4">نظام فرز الأصوات الانتخابية</h1>
-
-        <div class="mb-3 sm:mb-4">
-            <div class="bg-gray-100 p-2 sm:p-3 rounded-lg shadow mb-2 flex justify-between items-center">
-                <span class="text-gray-600 text-sm sm:text-base">الإدخال الحالي:</span>
-                <span id="currentBallot" class="text-xl sm:text-2xl font-bold">0</span>
-            </div>
-            <div class="bg-gray-100 p-2 sm:p-3 rounded-lg shadow flex justify-between items-center">
-                <span class="text-gray-600 text-sm sm:text-base">إجمالي الأصوات:</span>
-                <span id="totalVotes" class="text-xl sm:text-2xl font-bold">0</span>
-            </div>
+<body>
+    <div class="container">
+        <div class="header">
+            <p>🗳️ نظام فرز الأصوات الانتخابية</p>
         </div>
 
-        <div class="grid grid-cols-3 gap-1 sm:gap-2 mb-3 sm:mb-4" id="numericPad"></div>
-
-        <div class="grid grid-cols-1 gap-1 sm:gap-2 mb-3 sm:mb-4">
-            <button id="confirmVote"
-                class="bg-green-500 hover:bg-green-600 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-check mr-1"></i> تأكيد
-            </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-1 sm:gap-2 mb-3 sm:mb-4">
-            <button id="invalidVoteBtn"
-                class="bg-gray-500 hover:bg-gray-600 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-ban mr-1"></i> صوت باطل
-            </button>
-            <button id="clearEntry"
-                class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-times mr-1"></i> مسح الإدخال
-            </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-1 sm:gap-2 mb-3 sm:mb-4">
-            <button id="undoVote"
-                class="bg-red-500 hover:bg-red-600 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200 disabled:opacity-50">
-                <i class="fas fa-undo-alt mr-1"></i> تراجع
-            </button>
-            <button id="redoVote"
-                class="bg-blue-400 hover:bg-blue-500 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200 disabled:opacity-50">
-                <i class="fas fa-redo-alt mr-1"></i> إعادة
-            </button>
-        </div>
-
-        <div class="mb-3 sm:mb-4">
-            <div class="bg-gray-100 p-2 sm:p-3 rounded-lg shadow mb-2 flex justify-between items-center">
-                <span class="text-gray-600 text-sm sm:text-base">الأصوات الصحيحة:</span>
-                <span id="validVotes" class="text-xl sm:text-2xl font-bold">0</span>
-            </div>
-            <div class="bg-gray-100 p-2 sm:p-3 rounded-lg shadow flex justify-between items-center">
-                <span class="text-gray-600 text-sm sm:text-base">الأصوات الباطلة:</span>
-                <span id="invalidVotes" class="text-xl sm:text-2xl font-bold">0</span>
-            </div>
-        </div>
-
-        <div class="bg-gray-100 rounded-lg shadow p-2 sm:p-4 mb-3 sm:mb-4 text-sm sm:text-base max-h-60 overflow-y-auto"
-            id="results"></div>
-
-        <!-- زر تحديث عدد المرشحين -->
-        <div class="grid grid-cols-1 gap-1 sm:gap-2 mb-2 sm:mb-4">
-            <button id="updateCandidateCount"
-                class="bg-blue-500 hover:bg-blue-600 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-users mr-1"></i> تحديث عدد المرشحين
-            </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-1 sm:gap-2 mb-2 sm:mb-3">
-            <button id="clearAll"
-                class="bg-red-600 hover:bg-red-700 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-trash-alt mr-1"></i> مسح الكل
-            </button>
-            <button id="openCommitteeModal"
-                class="bg-green-600 hover:bg-green-700 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-file-export mr-1"></i> تصدير النتائج
-            </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-1 sm:gap-2 mb-2 sm:mb-3">
-            <button id="saveDataLocally"
-                class="bg-blue-600 hover:bg-blue-700 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-save mr-1"></i> حفظ البيانات
-            </button>
-            <button id="loadDataLocally"
-                class="bg-purple-600 hover:bg-purple-700 text-white py-2 sm:py-3 text-sm sm:text-base rounded-lg shadow transition duration-200">
-                <i class="fas fa-upload mr-1"></i> استعادة البيانات
-            </button>
-        </div>
-    </div>
-
-    <!-- نافذة مودال -->
-    <div id="committeeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-            <h2 class="text-xl font-bold mb-4 text-center">إدخال بيانات اللجنة الفرعية</h2>
-
-            <label class="block mb-2">عدد الناخبين باللجنة:</label>
-            <input type="text" id="totalnumVotes" class="w-full border p-2 rounded mb-3">
-
-            <label class="block mb-2">اللجنة الفرعية رقم:</label>
-            <input type="text" id="subCommitteeNumber" class="w-full border p-2 rounded mb-3">
-
-            <label class="block mb-2">مقرها:</label>
-            <input type="text" id="subCommitteeLocation" class="w-full border p-2 rounded mb-3">
-
-            <label class="block mb-2">التابعة للجنة العامة رقم:</label>
-            <input type="text" id="mainCommitteeNumber" class="w-full border p-2 rounded mb-3">
-
-            <label class="block mb-2">ومقرها:</label>
-            <input type="text" id="mainCommitteeLocation" class="w-full border p-2 rounded mb-3">
-
-            <label class="block mb-2">رئيس اللجنة:</label>
-            <input type="text" id="committeeHead" class="w-full border p-2 rounded mb-3">
-
-            <div class="flex justify-end mt-4 space-x-reverse space-x-4">
-                <button id="exportResults"
-                    class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex items-center gap-2">
-                    <i class="fas fa-file-pdf"></i>
-                    تصدير النتائج
-                </button>
-                <button id="closeCommitteeModal"
-                    class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded flex items-center gap-2">
-                    <i class="fas fa-times-circle"></i>
-                    إلغاء
-                </button>
-            </div>
-
-
-        </div>
-    </div>
-
-    <script>
-        // فتح وإغلاق المودال
-        document.getElementById('openCommitteeModal').onclick = () => {
-            document.getElementById('committeeModal').classList.remove('hidden');
-        };
-        document.getElementById('closeCommitteeModal').onclick = () => {
-            document.getElementById('committeeModal').classList.add('hidden');
-        };
-
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const numericPad = document.getElementById("numericPad");
-            const currentBallotEl = document.getElementById("currentBallot");
-            const totalVotesEl = document.getElementById("totalVotes");
-            const validVotesEl = document.getElementById("validVotes");
-            const invalidVotesEl = document.getElementById("invalidVotes");
-            const resultsEl = document.getElementById("results");
-            const confirmVoteBtn = document.getElementById("confirmVote");
-            const clearEntryBtn = document.getElementById("clearEntry");
-            const undoVoteBtn = document.getElementById("undoVote");
-            const redoVoteBtn = document.getElementById("redoVote");
-            const clearAllBtn = document.getElementById("clearAll");
-            const exportResultsBtn = document.getElementById("exportResults");
-            const saveDataBtn = document.getElementById("saveDataLocally");
-            const loadDataBtn = document.getElementById("loadDataLocally");
-            const updateCandidateCountBtn = document.getElementById('updateCandidateCount');
-            const invalidVoteBtn = document.getElementById("invalidVoteBtn");
-
-            let currentBallot = "";
-            let totalVotes = 0;
-            let validVotesCount = 0;
-            let invalidVotesCount = 0;
-            let candidates = 10;
-            let votes = {};
-            let history = [];
-            let historyIndex = -1;
-
-            // منع التحديثات المتعددة السريعة
-            let isProcessing = false;
-
-            // Initialize votes
-            function initializeVotes(preserveExisting = false) {
-                let tempVotes = preserveExisting ? { ...votes } : {};
-                votes = {};
-                for (let i = 1; i <= candidates; i++) {
-                    // إذا كان المرشح موجوداً سابقاً، احتفظ بأصواته
-                    votes[i] = preserveExisting && tempVotes[i] !== undefined ? tempVotes[i] : 0;
-                }
-                renderResults();
-            }
-            initializeVotes();
-
-            // Update UI
-            function renderResults() {
-                // ترتيب المرشحين حسب عدد الأصوات (تنازلياً)
-                const sortedCandidates = Object.entries(votes).sort((a, b) => b[1] - a[1]);
-
-                resultsEl.innerHTML = sortedCandidates.map(([candidate, count]) => `
-                    <div class="flex justify-between items-center border-b pb-1 mb-1">
-                        <span class="font-medium text-sm sm:text-base">المرشح ${candidate}</span>
-                        <span class="font-bold text-base sm:text-lg">${count}</span>
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">إعداد التصويت</h2>
+                <div class="voting-form">
+                    <div class="input-group">
+                        <label class="stat-label">إجمالي عدد الناخبين المُقيّدين في اللجنة</label>
+                        <input type="number" id="manualTotalVotesInput" placeholder="أدخل إجمالي الأصوات"
+                            class="stat-input" oninput="updateStats()">
                     </div>
-                `).join("");
+                    <div class="input-group">
+                        <label for="totalCandidatesInput">إجمالي عدد المرشحين:</label>
+                        <input type="number" id="totalCandidatesInput" placeholder="أدخل إجمالي المرشحين"
+                            class="stat-input" oninput="addCandidateinput()">
+                    </div>
+                    <div class="input-group">
+                        <label for="candidatesPerVote">التصويت الصحيح:</label>
+                        <select id="candidatesPerVote" onchange="updateVotingForm()">
+                            <option value="1">مرشح واحد</option>
+                            <option value="2">مرشحان</option>
+                            <option value="3">3 مرشحين</option>
+                            <option value="4" selected>4 مرشحين</option>
+                            <option value="5">5 مرشحين</option>
+                            <option value="6">6 مرشحين</option>
+                            <option value="7">7 مرشحين</option>
+                            <option value="8">8 مرشحين</option>
+                            <option value="9">9 مرشحين</option>
+                            <option value="10">10 مرشحين</option>
+                            <option value="11">11 مرشح</option>
+                            <option value="12">12 مرشح</option>
+                            <option value="13">13 مرشح</option>
+                            <option value="14">14 مرشح</option>
+                            <option value="15">15 مرشح</option>
+                        </select>
+                    </div>
 
-                currentBallotEl.textContent = currentBallot || "0";
-                totalVotesEl.textContent = totalVotes;
-                validVotesEl.textContent = validVotesCount;
-                invalidVotesEl.textContent = invalidVotesCount;
+                </div>
+            </div>
 
-                // تحديث حالة أزرار التراجع وإعادة
-                undoVoteBtn.disabled = historyIndex < 0;
-                redoVoteBtn.disabled = historyIndex >= history.length - 1;
-            }
+            <!-- قسم التصويت -->
+            <div class="section">
+                <h2 class="section-title" id="votingSectionTitle">تسجيل الصوت الصحيح (2 مرشحين)</h2>
+                <div class="alert alert-error" id="errorAlert"></div>
+                <div class="alert alert-success" id="successAlert"></div>
 
-            // بناء لوحة الأرقام
-            function buildNumericPad() {
-                numericPad.innerHTML = ""; // Clear existing buttons
+                <div class="vote-recording colored" id="votingInputs">
+                    <div class="input-group">
+                        <label class="text-align" for="candidate1">1</label>
+                        <input type="number" id="candidate1" placeholder="رقم المرشح">
+                    </div>
+                </div>
 
-                const layout = [
-                    [9, 8, 7],
-                    [6, 5, 4],
-                    [3, 2, 1],
-                    ['', 0, '']
-                ];
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="recordVote()">
+                        ✅ صوت صحيح
+                    </button>
+                    <button class="btn btn-warning" onclick="recordInvalidVote()">
+                        ❌ صوت باطل
+                    </button>
+                    <button class="btn btn-danger" id="undoBtn" onclick="undoLastVote()" disabled>
+                        ↩️ تراجع صوت
+                    </button>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-success" id="saveDataBtn">
+                        💾 حفظ البيانات
+                    </button>
+                    <button class="btn btn-info" id="loadDataBtn">
+                        📂 استعادة البيانات
+                    </button>
+                    <button class="btn btn-secondary" id="exportPdfBtn">
+                        📄 تصدير النتائج
+                    </button>
+                </div>
+            </div>
 
-                layout.forEach(row => {
-                    row.forEach(num => {
-                        const btn = document.createElement("button");
-                        if (num === '') {
-                            btn.className = "invisible"; // لتأمين شكل الشبكة
-                        } else {
-                            btn.textContent = num;
-                            btn.className = "number-display bg-blue-500 hover:bg-blue-600 text-white text-lg sm:text-2xl py-2 sm:py-3 rounded-lg shadow transition duration-200";
-                            btn.onclick = () => {
-                                currentBallot += num.toString();
-                                renderResults();
-                            };
-                        }
-                        numericPad.appendChild(btn);
-                    });
-                });
-            }
-            buildNumericPad();
+            <!-- قسم إدارة المرشحين -->
+            <div class="section">
+                <h2 class="section-title">إدارة المرشحين</h2>
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="showAddCandidateModal()">
+                        ➕👥 إضافة مرشح
+                    </button>
 
-            // تسجيل خطوة في التاريخ
-            function pushToHistory() {
-                // قطع سجل التاريخ عند هذه النقطة إذا كنا قد تراجعنا سابقًا
-                if (historyIndex < history.length - 1) {
-                    history = history.slice(0, historyIndex + 1);
+                    <button class="btn btn-warning" onclick="showDeleteCandidateModal()">
+                        ➖👤 حذف مرشح
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="resetAllVotes()">
+                        🧹 مسح الكل
+                    </button>
+                </div>
+            </div>
+            <div class="section">
+                <h2 class="section-title">إنهاء التصويت</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" id="finishBtn" onclick="showFinishModal()">
+                        🏁 إنهاء وإنشاء QR
+                    </button>
+                    <button class="btn btn-info" onclick="showQRScannerModal()">
+                        📱 ماسح QR (رئيس اللجنة)
+                    </button>
+                </div>
+            </div>
+
+            <!-- قسم الإحصائيات -->
+            <div class="section">
+                <h2 class="section-title">الإحصائيات العامة</h2>
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalCandidates">0</div>
+                        <div class="stat-label">عدد المرشحين</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalVotes">0</div>
+                        <div class="stat-label">إجمالي الأصوات</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalVoteSets">0</div>
+                        <div class="stat-label">الأصوات الصحيحة</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="invalidVotes">0</div>
+                        <div class="stat-label">الأصوات الباطلة</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="castedVotes">0</div>
+                        <div class="stat-label">الأصوات المُدلى بها</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم نتائج المرشحين -->
+            <div class="section" id="resultsSection">
+                <h2 class="section-title">نتائج المرشحين</h2>
+                <table class="candidates-table" id="candidatesTable">
+                    <thead>
+                        <tr>
+                            <th>رقم المرشح</th>
+                            <th>عدد الأصوات</th>
+                            <th>النسبة المئوية</th>
+                        </tr>
+                    </thead>
+                    <tbody id="candidatesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal لإضافة المرشحين -->
+    <div id="addCandidateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">تعيين عدد المرشحين</div>
+            <div class="voting-form">
+                <div class="input-group">
+                    <label for="totalCandidatesInput2">عدد المرشحين:</label>
+                    <input type="number" id="totalCandidatesInput2" min="1" max="50">
+                </div>
+            </div>
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="addCandidates()">تأكيد</button>
+                <button class="btn btn-secondary" onclick="closeModal('addCandidateModal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal لحذف المرشح -->
+    <div id="deleteCandidateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">حذف مرشح</div>
+            <div class="voting-form">
+                <div class="input-group">
+                    <label for="deleteCandidateInput">أرقام المرشحين المراد حذفهم (مثال: 1, 3, 5):</label>
+                    <input type="text" id="deleteCandidateInput" placeholder="1, 3, 5">
+                </div>
+            </div>
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn btn-danger" onclick="deleteCandidate()">حذف</button>
+                <button class="btn btn-secondary" onclick="closeModal('deleteCandidateModal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal لعرض QR Code -->
+    <div id="finishModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">إنهاء الفرز وإنشاء QR Code</div>
+            <div style="text-align: center; padding: 20px;">
+                <p>تم إنشاء QR Code يحتوي على جميع بيانات الأصوات</p>
+                <canvas id="qrCanvas" style="border: 2px solid #ddd; margin: 20px 0;"></canvas>
+                <div id="qrInfo"
+                    style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; text-align: right;">
+                    <strong>معلومات الفرز:</strong><br>
+                    <span id="qrSummary"></span>
+                </div>
+                <p style="color: #666; font-size: 14px;">
+                    يمكن لرئيس اللجنة مسح هذا الكود لدمج النتائج
+                </p>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="downloadQR()">💾 تحميل QR</button>
+                <button class="btn btn-secondary" onclick="closeModal('finishModal')">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal لماسح QR -->
+    <div id="qrScannerModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">ماسح QR Code (رئيس اللجنة)</div>
+            <div style="text-align: center; padding: 20px;">
+                <video id="qrVideo" style="width: 100%; max-width: 400px; border: 2px solid #ddd;" autoplay muted
+                    playsinline></video>
+                <canvas id="qrScanCanvas" style="display: none;"></canvas>
+                <div id="scanStatus" style="margin: 15px 0; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+                    جاري تشغيل الكاميرا...
+                </div>
+                <div id="scanResult"
+                    style="display: none; background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 10px 0; text-align: right;">
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-success" id="mergeDataBtn" onclick="mergeScannedData()" style="display: none;">
+                    🔗 دمج البيانات
+                </button>
+                <button class="btn btn-secondary" onclick="closeQRScanner()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let candidates = {};
+        let validVotes = [];
+        let invalidVotesCount = 0;
+        let voteHistory = [];
+        let isProcessing = false;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            setupSaveLoadButtons();
+            setupAutoSave();
+            updateVotingForm();
+            updateStats();
+            updateCandidatesTable();
+            setupInputEventListeners();
+
+            document.getElementById('newCandidateId').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addCandidates();
                 }
+            });
+        });
 
-                history.push({
-                    votes: JSON.parse(JSON.stringify(votes)),
-                    totalVotes,
-                    validVotesCount,
-                    invalidVotesCount
-                });
-                historyIndex++;
+        function updateVotingForm() {
+            candidatesPerVote = parseInt(document.getElementById('candidatesPerVote').value);
+            const votingInputs = document.getElementById('votingInputs');
+            const votingSectionTitle = document.getElementById('votingSectionTitle');
+
+            // تحديث العنوان
+            const candidateText = candidatesPerVote === 1 ? 'مرشح واحد' :
+                candidatesPerVote === 2 ? 'مرشحان' :
+                    `${candidatesPerVote} مرشحين`;
+            votingSectionTitle.textContent = `تسجيل الصوت الصحيح (${candidateText})`;
+
+            // مسح الحقول الموجودة
+            votingInputs.innerHTML = '';
+
+            // إنشاء الحقول الجديدة
+            for (let i = 1; i <= candidatesPerVote; i++) {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'input-group';
+
+                const label = document.createElement('label');
+                label.setAttribute('for', `candidate${i}`);
+                label.textContent = getOrdinalText(i) + '-';
+
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = `candidate${i}`;
+                input.placeholder = 'رقم المرشح';
+
+                inputGroup.appendChild(label);
+                inputGroup.appendChild(input);
+                votingInputs.appendChild(inputGroup);
             }
 
-            // Confirm vote
-            confirmVoteBtn.addEventListener("click", () => {
-                if (isProcessing) return;
-                isProcessing = true;
+            setupInputEventListeners();
 
-                if (!currentBallot) {
-                    alert("يرجى إدخال رقم المرشح أولاً");
-                    isProcessing = false;
+            document.getElementById('candidate1').focus();
+        }
+
+        // الحصول على النص الترتيبي للأرقام
+        function getOrdinalText(number) {
+            const ordinals = {
+                1: '1',
+                2: '2',
+                3: '3',
+                4: '4',
+                5: '5',
+                6: '6',
+                7: '7',
+                8: '8',
+                9: '9',
+                10: '10',
+                11: '11',
+                12: '12',
+                13: '13',
+                14: '14',
+                15: '15'
+            };
+            return ordinals[number] || `المرشح رقم ${number}`;
+        }
+
+        // إعداد مستمعات الأحداث للحقول
+        function setupInputEventListeners() {
+            for (let i = 1; i <= candidatesPerVote; i++) {
+                const input = document.getElementById(`candidate${i}`);
+                if (input) {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            if (i < candidatesPerVote) {
+                                const nextInput = document.getElementById(`candidate${i + 1}`);
+                                if (nextInput) nextInput.focus();
+                            } else {
+                                recordVote();
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        function isValidInteger(value) {
+            const trimmedValue = value.trim();
+            if (trimmedValue === '') return false;
+
+            const num = parseFloat(trimmedValue);
+            return !isNaN(num) && Number.isInteger(num) && num > 0;
+        }
+        function recordVote() {
+            const candidatesPerVote = parseInt(document.getElementById('candidatesPerVote').value);
+            const voteNumbers = [];
+
+            // جمع أرقام المرشحين مع التحقق
+            for (let i = 1; i <= candidatesPerVote; i++) {
+                const input = document.getElementById(`candidate${i}`);
+                const inputValue = input.value;
+
+                // التحقق من صحة الإدخال
+                if (!isValidInteger(inputValue)) {
+                    if (inputValue.trim() === '') {
+                        showError(`يرجى إدخال رقم المرشح رقم ${i}`);
+                    } else {
+                        showError(`يرجى إدخال رقم صحيح وموجب للمرشح رقم ${i}`);
+                    }
+                    input.focus();
                     return;
                 }
 
-                const candidateNumber = parseInt(currentBallot);
-                if (votes.hasOwnProperty(candidateNumber)) {
-                    votes[candidateNumber]++;
-                    totalVotes++;
-                    validVotesCount++;
+                const value = parseInt(inputValue);
 
-                    pushToHistory();
-                    currentBallot = "";
-                    renderResults();
-                } else {
-                    alert(`المرشح رقم ${candidateNumber} غير موجود`);
-                    currentBallot = "";
-                    renderResults();
+                // التحقق من عدم التكرار
+                if (voteNumbers.includes(value)) {
+                    showError(`لا يمكن تكرار نفس المرشح (${value}) في الصوت الواحد`);
+                    input.focus();
+                    return;
                 }
 
-                isProcessing = false;
-            });
+                voteNumbers.push(value);
+            }
 
-            // تسجيل صوت باطل
-            invalidVoteBtn.addEventListener("click", () => {
-                if (isProcessing) return;
-                isProcessing = true;
-
-                invalidVotesCount++;
-                totalVotes++;
-
-                pushToHistory();
-                currentBallot = "";
-                renderResults();
-
-                isProcessing = false;
-            });
-
-            // Clear entry
-            clearEntryBtn.addEventListener("click", () => {
-                currentBallot = "";
-                renderResults();
-            });
-
-            // Undo vote
-            undoVoteBtn.addEventListener("click", () => {
-                if (isProcessing || historyIndex < 0) return;
-                isProcessing = true;
-
-                historyIndex--;
-
-                if (historyIndex < 0) {
-                    // إعادة تهيئة إذا لم يكن هناك تاريخ
-                    votes = {};
-                    initializeVotes(false);
-                    totalVotes = 0;
-                    validVotesCount = 0;
-                    invalidVotesCount = 0;
-                } else {
-                    const prevState = history[historyIndex];
-                    votes = JSON.parse(JSON.stringify(prevState.votes));
-                    totalVotes = prevState.totalVotes;
-                    validVotesCount = prevState.validVotesCount;
-                    invalidVotesCount = prevState.invalidVotesCount;
-                }
-
-                renderResults();
-                isProcessing = false;
-            });
-
-            // Redo vote
-            redoVoteBtn.addEventListener("click", () => {
-                if (isProcessing || historyIndex >= history.length - 1) return;
-                isProcessing = true;
-
-                historyIndex++;
-                const nextState = history[historyIndex];
-                votes = JSON.parse(JSON.stringify(nextState.votes));
-                totalVotes = nextState.totalVotes;
-                validVotesCount = nextState.validVotesCount;
-                invalidVotesCount = nextState.invalidVotesCount;
-
-                renderResults();
-                isProcessing = false;
-            });
-
-            // Clear all
-            clearAllBtn.addEventListener("click", () => {
-                if (isProcessing) return;
-                isProcessing = true;
-
-                if (confirm("هل أنت متأكد من رغبتك في مسح جميع البيانات؟")) {
-                    votes = {};
-                    initializeVotes(false); // إعادة تهيئة بدون الاحتفاظ بالبيانات
-                    totalVotes = 0;
-                    validVotesCount = 0;
-                    invalidVotesCount = 0;
-                    history = [];
-                    historyIndex = -1;
-                    currentBallot = "";
-                    renderResults();
-                }
-
-                isProcessing = false;
-            });
-
-            // زر تصدير النتائج
-            exportResultsBtn.addEventListener("click", async () => {
-                if (isProcessing) return;
-
-                isProcessing = true;
-                exportResultsBtn.disabled = true;
-                exportResultsBtn.textContent = "جاري التصدير...";
-
-                const now = new Date();
-                const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                const timeStr = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
-
-                // ترتيب المرشحين حسب عدد الأصوات تنازليًا
-                const sortedCandidates = Object.entries(votes).sort((a, b) => b[1] - a[1]);
-
-                try {
-                    await createPdfWithHtml2Pdf(sortedCandidates, dateStr, timeStr);
-                } catch (error) {
-                    console.error("خطأ في إنشاء PDF:", error);
-                    alert("حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.");
-                } finally {
-                    isProcessing = false;
-                    exportResultsBtn.disabled = false;
-                    exportResultsBtn.innerHTML = 'تصدير النتائج <i class="fas fa-file-pdf"></i>';
-                }
-            });
-
-            // إنشاء PDF باستخدام html2pdf - نسخة محسنة
-            function createPdfWithHtml2Pdf(sortedCandidates, dateStr, timeStr) {
-                return new Promise(async (resolve, reject) => {
-                    const element = document.createElement('div');
-                    element.style.width = '100%';
-                    element.style.fontFamily = "'Cairo', 'Arial', sans-serif'";
-
-                    // عدد العناصر في الصفحة الأولى
-                    const firstPageCount = 20;
-                    const nextPagesCount = 30;
-
-                    let pagesHtml = '';
-
-                    const createTableHeader = () => `
-                        <thead>
-                            <tr style="background-color: #16a085; color: white;">
-                                <th style="border: 1px solid #ddd; padding: 6px; text-align: right; width: 70%;">المرشح</th>
-                                <th style="border: 1px solid #ddd; padding: 6px; text-align: center; width: 30%;">عدد الأصوات</th>
-                            </tr>
-                        </thead>
-                    `;
-
-                    // الصفحة الأولى (20 اسم فقط)
-                    let firstPageRows = '';
-                    sortedCandidates.slice(0, firstPageCount).forEach(([candidate, count], index) => {
-                        const rowStyle = index % 2 === 0 ? 'background-color: #f9f9f9;' : 'background-color: #ffffff;';
-                        firstPageRows += `
-                            <tr style="${rowStyle}">
-                                <td style="border: 1px solid #ddd; padding: 5px; text-align: right;"> رقم ${candidate}</td>
-                                <td style="border: 1px solid #ddd; padding: 5px; text-align: center;">${count}</td>
-                            </tr>
-                        `;
-                    });
-
-                    // حساب إجمالي الأصوات من المرشحين
-                    const totalCandidateVotes = sortedCandidates.reduce((sum, [_, count]) => sum + count, 0);
-                    const subCommitteeNumber = document.getElementById('subCommitteeNumber').value;
-                    const subCommitteeLocation = document.getElementById('subCommitteeLocation').value;
-                    const mainCommitteeNumber = document.getElementById('mainCommitteeNumber').value;
-                    const mainCommitteeLocation = document.getElementById('mainCommitteeLocation').value;
-                    const committeeHead = document.getElementById('committeeHead').value;
-                    const totalnumVotes = document.getElementById('totalnumVotes').value;
-
-                    pagesHtml += `
-                        <div>
-                            <div style="text-align: right; padding: 10px; word-spacing: 3px;">
-                                <div style="text-align: center; margin-bottom: 15px;">
-                                    <h1 style="color: #16a085; margin: 0; font-size: 24px;">نتائج &nbsp;&nbsp;الانتخابات</h1>
-                                    <p style="margin: 5px 0 0 0; font-size: 14px;">تاريخ التقرير &nbsp;&nbsp; ${dateStr}</p>
-                                </div>
-                                
-                                <div style="border: 1px solid #16a085; border-radius: 5px; padding: 10px; margin-bottom: 15px; background-color: #f5f5f5;">
-                                    <h3 style="color: #e74c3c; margin: 0 0 10px 0; font-size: 18px; text-align: center;">
-                                        ملخص نتائج اللجنة الفرعية رقم &nbsp;( ${subCommitteeNumber} )
-                                    </h3>
-
-                                    <div style="display: flex; justify-content: space-between; font-size: 14px; direction: rtl;">
-                                        <div style="flex: 1; text-align: right;"><strong>ومقرها</strong>: ${subCommitteeLocation}</div>
-                                        <div style="flex: 1; text-align: center;"><strong>التابعة للجنة العامة رقم </strong>: ${mainCommitteeNumber}</div>
-                                        <div style="flex: 1; text-align: left;"><strong>ومقر اللجنة العامة </strong>: ${mainCommitteeLocation}</div>
-                                    </div>
-
-
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; ">
-                                        <tr>
-                                            <td style="padding: 3px 0;"><strong>إجمالي عدد الناخبين المقيدين &nbsp;باللجنة</strong>:</td>
-                                            <td style="text-align: left; padding: 3px 0;">${totalnumVotes}<strong>&nbsp;&nbsp;&nbsp;ناخبًا </strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 3px 0;"><strong>إجمالي عدد الأصوات المُدلى &nbsp;بها</strong>:</td>
-                                            <td style="text-align: left; padding: 3px 0;">${totalVotes}<strong>&nbsp;&nbsp;&nbsp;صوتًا </strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 3px 0;"><strong>إجمالي عدد الأصوات &nbsp;الباطلـــــة</strong>:</td>
-                                            <td style="text-align: left; padding: 3px 0;">${invalidVotesCount}<strong>&nbsp;&nbsp;&nbsp;صوتًا </strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 3px 0;"><strong>إجمالي عدد الأصوات &nbsp;الصحيحة</strong>:</td>
-                                            <td style="text-align: left; padding: 3px 0;">${validVotesCount}<strong>&nbsp;&nbsp;&nbsp;صوتًا </strong></td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 3px 0;"><strong>عدد المرشحين المقيدين &nbsp;باللجنة</strong>:</td>
-                                            <td style="text-align: left; padding: 3px 0;">${sortedCandidates.length}<strong>&nbsp;&nbsp;&nbsp;مرشحًا </strong></td>
-                                        </tr>
-                                    </table>
-                                    <p style="color: #e74c3c; text-align: center;"><strong> رئيس اللجنة المستشار </strong>: ${committeeHead}</p>
-                                </div>
-                                
-                                <h3 style="color: #16a085; margin: 10px 0; font-size: 16px;">ترتيب المرشحين حسب عدد الأصوات</h3>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                                    ${createTableHeader()}
-                                    <tbody>
-                                        ${firstPageRows}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    `;
-
-                    // الصفحات التالية (كل صفحة تحتوي 25 اسم)
-                    for (let i = firstPageCount; i < sortedCandidates.length; i += nextPagesCount) {
-                        const chunk = sortedCandidates.slice(i, i + nextPagesCount);
-                        let rows = '';
-                        chunk.forEach(([candidate, count], index) => {
-                            const rowStyle = index % 2 === 0 ? 'background-color: #f9f9f9;' : 'background-color: #ffffff;';
-                            rows += `
-                                <tr style="${rowStyle}">
-                                    <td style="border: 1px solid #ddd; padding: 5px; text-align: right;"> رقم ${candidate}</td>
-                                    <td style="border: 1px solid #ddd; padding: 5px; text-align: center;">${count}</td>
-                                </tr>
-                            `;
-                        });
-
-                        const currentPage = Math.ceil((i - firstPageCount) / nextPagesCount) + 2;
-                        const totalPages = Math.ceil((sortedCandidates.length - firstPageCount) / nextPagesCount) + 1;
-                        const isLastPage = i + nextPagesCount >= sortedCandidates.length;
-
-                        pagesHtml += `
-                            <div>
-                                <div dir="rtl" style="text-align: right; padding: 10px;">
-                                    <div style="text-align: center; margin-bottom: 10px;">
-                                        <h2 style="color: #16a085; margin: 0; font-size: 18px;">نتائج الانتخابات - تابع</h2>
-                                        <p style="margin: 5px 0 0 0; font-size: 12px;">تاريخ التقرير  &nbsp;&nbsp;${dateStr}</p>
-                                    </div>
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                                        ${createTableHeader()}
-                                        <tbody>
-                                            ${rows}
-                                        </tbody>
-                                    </table>
-                                    <div style="text-align: left; font-size: 10px; color: #777; margin-top: 10px;">
-                                        صفحة ${currentPage} من ${totalPages}
-                                    </div>
-
-                                    ${isLastPage ? `
-                                    <div style="text-align: center; font-size: 10px; color: #444;">
-                                        إهداء من المستشار <strong>محمد الحمراوي</strong> للسادة الأعضاء
-                                    </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
+            // التحقق من وجود المرشحين
+            for (let id of voteNumbers) {
+                if (!(id in candidates)) {
+                    showError(`المرشح رقم ${id} غير موجود. يرجى إضافته أولاً`);
+                    for (let i = 1; i <= candidatesPerVote; i++) {
+                        const input = document.getElementById(`candidate${i}`);
+                        if (parseInt(input.value) === id) {
+                            input.focus();
+                            break;
+                        }
                     }
+                    return;
+                }
+            }
 
-                    element.innerHTML = pagesHtml;
+            // تسجيل الأصوات
+            voteNumbers.forEach(num => {
+                candidates[num]++;
+            });
 
-                    document.body.appendChild(element);
-                    await new Promise(requestAnimationFrame);
+            validVotes.push([...voteNumbers]);
+            voteHistory.push({ type: 'valid', data: [...voteNumbers] });
 
-                    const opt = {
-                        margin: [5, 10, 10, 10],  // [top, right, bottom, left] في مم
-                        filename: `نتائج_الانتخابات_${dateStr}_${timeStr}.pdf`,
-                        image: { type: 'jpeg', quality: 0.95 },
-                        html2canvas: {
-                            scale: 2,
-                            useCORS: true,
-                            logging: false,
-                            letterRendering: true
-                        },
-                        jsPDF: {
-                            unit: 'mm',
-                            format: 'a4',
-                            orientation: 'portrait',
-                            compress: true
-                        },
-                        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-                        // تحميل خط القاهرة لدعم اللغة العربية
-                        fontFaces: [
-                            {
-                                family: 'Cairo',
-                                style: 'normal',
-                                weight: 'normal',
-                                src: [{ url: 'https://fonts.gstatic.com/s/cairo/v20/SLXVc1nY6HkvangtZmpQdkhzfH5lkSs2SgRjCAGMQ1z0hGA-W1Q.woff2', format: 'woff2' }]
-                            }
-                        ]
-                    };
+            for (let i = 1; i <= candidatesPerVote; i++) {
+                document.getElementById(`candidate${i}`).value = '';
+            }
 
-                    html2pdf().from(element).set(opt).save()
-                        .then(() => {
-                            document.body.removeChild(element);
-                            resolve();
-                        })
-                        .catch(err => {
-                            document.body.removeChild(element);
-                            reject(err);
-                        });
+            showSuccess(`تم تسجيل صوت صحيح للمرشحين: ${voteNumbers.join(', ')}`);
+            updateStats();
+            updateCandidatesTable();
+            document.getElementById('undoBtn').disabled = false;
+            document.getElementById('candidate1').focus();
+        }
+        // تسجيل صوت باطل
+        function recordInvalidVote() {
+            invalidVotesCount++;
+            voteHistory.push({ type: 'invalid' });
+            showSuccess('تم تسجيل صوت باطل');
+            updateStats();
+            document.getElementById('undoBtn').disabled = false;
+            document.getElementById('candidate1').focus();
+
+        }
+
+        // التراجع عن آخر صوت
+        function undoLastVote() {
+            if (voteHistory.length === 0) return;
+
+            const lastVote = voteHistory.pop();
+
+            if (lastVote.type === 'valid') {
+                lastVote.data.forEach(candidateNum => {
+                    candidates[candidateNum]--;
+                    if (candidates[candidateNum] === 0) {
+                        delete candidates[candidateNum];
+                    }
                 });
+                validVotes.pop();
+                showSuccess('تم التراجع عن آخر صوت صحيح');
+                document.getElementById('candidate1').focus();
+
+            } else {
+                invalidVotesCount--;
+                showSuccess('تم التراجع عن آخر صوت باطل');
+                document.getElementById('candidate1').focus();
 
             }
 
-            // // Excel
-            // exportResultsBtn.addEventListener("click", () => {
-            //     if (isProcessing) return;
-            //     isProcessing = true;
+            if (voteHistory.length === 0) {
+                document.getElementById('undoBtn').disabled = true;
+                document.getElementById('candidate1').focus();
 
-            //     const now = new Date();
-            //     const dateStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
-            //     const timeStr = `${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}`;
+            }
 
-            //     // ترتيب البيانات تنازلياً حسب عدد الأصوات
-            //     const sortedCandidates = Object.entries(votes).sort((a, b) => b[1] - a[1]);
+            updateStats();
+            updateCandidatesTable();
+        }
 
-            //     // إنشاء بيانات الجدول
-            //     const data = [["المرشح", "عدد الأصوات"]];
-            //     sortedCandidates.forEach(([candidate, count]) => {
-            //         data.push([candidate, count]);
-            //     });
+        function showAddCandidateModal() {
+            document.getElementById('addCandidateModal').style.display = 'block';
+            document.getElementById('totalCandidatesInput2').focus();
+        }
 
-            //     // إضافة ملخص إجمالي
-            //     data.push([]);
-            //     data.push(["إجمالي الأصوات", totalVotes]);
-            //     data.push(["الأصوات الصحيحة", validVotesCount]);
-            //     data.push(["الأصوات الباطلة", invalidVotesCount]);
+        function addCandidateinput() {
+            const totalCandidates = parseInt(document.getElementById('totalCandidatesInput').value);
 
-            //     // إنشاء ورقة عمل وملف Excel
-            //     const worksheet = XLSX.utils.aoa_to_sheet(data);
-            //     const workbook = XLSX.utils.book_new();
-            //     XLSX.utils.book_append_sheet(workbook, worksheet, "نتائج");
+            if (!totalCandidates || totalCandidates <= 0) {
+                alert('يرجى إدخال عدد صحيح من المرشحين');
+                return;
+            }
 
-            //     // حفظ الملف
-            //     XLSX.writeFile(workbook, `نتائج_الانتخابات_${dateStr}_${timeStr}.xlsx`);
-
-            //     isProcessing = false;
-            // });
-
-            // Save data locally
-            saveDataBtn.addEventListener("click", () => {
-                if (isProcessing) return;
-                isProcessing = true;
-
-                try {
-                    const dataToSave = {
-                        votes: votes,
-                        totalVotes: totalVotes,
-                        validVotesCount: validVotesCount,
-                        invalidVotesCount: invalidVotesCount,
-                        history: history,
-                        historyIndex: historyIndex,
-                        candidates: candidates,
-                        timestamp: new Date().toISOString()
-                    };
-                    localStorage.setItem("voteCounterData", JSON.stringify(dataToSave));
-                    alert("تم حفظ البيانات بنجاح");
-                } catch (error) {
-                    alert("حدث خطأ أثناء حفظ البيانات: " + error.message);
+            for (let i = 1; i <= totalCandidates; i++) {
+                if (!candidates[i]) {
+                    candidates[i] = 0;
                 }
+            }
 
-                isProcessing = false;
+            updateStats();
+            updateCandidatesTable();
+
+        }
+
+        function addCandidates() {
+            const totalCandidates = parseInt(document.getElementById('totalCandidatesInput2').value);
+
+            if (!totalCandidates || totalCandidates <= 0) {
+                alert('يرجى إدخال عدد صحيح من المرشحين');
+                return;
+            }
+
+            for (let i = 1; i <= totalCandidates; i++) {
+                if (!candidates[i]) {
+                    candidates[i] = 0;
+                }
+            }
+
+            closeModal('addCandidateModal');
+            updateStats();
+            updateCandidatesTable();
+            showSuccess(`تم إضافة ${totalCandidates} مرشح`);
+            document.getElementById('candidate1').focus();
+
+        }
+
+        function showDeleteCandidateModal() {
+            document.getElementById('deleteCandidateModal').style.display = 'block';
+            document.getElementById('deleteCandidateInput').focus();
+
+        }
+
+        function deleteCandidate() {
+            const input = document.getElementById('deleteCandidateInput').value;
+
+            if (!input.trim()) {
+                alert('يرجى إدخال أرقام المرشحين المطلوب حذفهم');
+                return;
+            }
+
+            // تقسيم الإدخال إلى أرقام بعد إزالة الفراغات
+            const candidateNumbers = input.split(',').map(num => parseInt(num.trim())).filter(num => !isNaN(num));
+
+            if (candidateNumbers.length === 0) {
+                alert('الرجاء إدخال أرقام صحيحة');
+                return;
+            }
+
+            let deletedCount = 0;
+            candidateNumbers.forEach(candidateNum => {
+                if (candidates.hasOwnProperty(candidateNum)) {
+                    delete candidates[candidateNum];
+                    deletedCount++;
+
+                    // إزالة المرشح من التصويتات والنتائج
+                    validVotes = validVotes.filter(vote => !vote.includes(candidateNum));
+                    voteHistory = voteHistory.filter(vote =>
+                        vote.type === 'invalid' || (Array.isArray(vote.data) && !vote.data.includes(candidateNum))
+                    );
+                }
             });
 
-            // Load data locally
-            loadDataBtn.addEventListener("click", () => {
-                if (isProcessing) return;
-                isProcessing = true;
+            closeModal('deleteCandidateModal');
+            updateStats();
+            updateCandidatesTable();
 
-                try {
-                    const data = localStorage.getItem("voteCounterData");
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        votes = parsed.votes || {};
-                        totalVotes = parsed.totalVotes || 0;
-                        validVotesCount = parsed.validVotesCount || 0;
-                        invalidVotesCount = parsed.invalidVotesCount || 0;
-                        history = parsed.history || [];
-                        historyIndex = parsed.historyIndex || -1;
+            if (deletedCount > 0) {
+                showSuccess(`تم حذف ${deletedCount} مرشح${deletedCount > 1 ? 'ين' : ''}`);
+            } else {
+                alert('لم يتم العثور على أي من المرشحين المحددين');
+            }
 
-                        // استعادة عدد المرشحين إن وجد
-                        if (parsed.candidates) {
-                            candidates = parsed.candidates;
-                        }
+            document.getElementById('candidate1').focus();
+        }
 
-                        renderResults();
 
-                        // عرض وقت آخر حفظ
-                        if (parsed.timestamp) {
-                            const saveDate = new Date(parsed.timestamp);
-                            const formattedDate = saveDate.toLocaleString('ar-EG');
-                            alert(`تم استعادة البيانات بنجاح\nآخر حفظ: ${formattedDate}`);
-                        } else {
-                            alert("تم استعادة البيانات بنجاح");
-                        }
-                    } else {
-                        alert("لا توجد بيانات محفوظة");
-                    }
-                } catch (error) {
-                    alert("حدث خطأ أثناء استعادة البيانات: " + error.message);
-                }
+        function resetAllVotes() {
+            if (confirm('هل أنت متأكد من مسح جميع البيانات؟')) {
+                candidates = {};
+                validVotes = [];
+                invalidVotesCount = 0;
+                voteHistory = [];
 
-                isProcessing = false;
-            });
+                document.getElementById('undoBtn').disabled = true;
+                document.getElementById('manualTotalVotesInput').value = '';
 
-            // تحديث عدد المرشحين
-            updateCandidateCountBtn.addEventListener('click', () => {
-                if (isProcessing) return;
-                isProcessing = true;
+                updateStats();
+                updateCandidatesTable();
+                showSuccess('تم مسح جميع البيانات');
+                document.getElementById('candidate1').focus();
 
-                // إنشاء مربع حوار مخصص
-                const dialogTitle = document.createElement('div');
-                dialogTitle.innerHTML = `
-                    <div style="position: fixed; z-index: 1000; top: 0; left: 0; right: 0; bottom: 0; 
-                          background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;">
-                        <div style="background: white; border-radius: 8px; padding: 20px; width: 85%; max-width: 300px;">
-                            <h3 style="margin-top: 0; font-weight: bold; font-size: 16px; text-align: center; margin-bottom: 15px;">
-                                تحديث عدد المرشحين
-                            </h3>
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
-                                <input type="number" id="candidateInput" style="padding: 8px; border: 1px solid #ccc; 
-                                      border-radius: 4px; text-align: center; font-size: 16px;" placeholder="أدخل عدد المرشحين" value="${candidates}">
-                                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                    <button id="confirmCandidates" style="flex: 1; background: #3b82f6; color: white; 
-                                          border: none; padding: 8px; border-radius: 4px; font-weight: bold;">تأكيد</button>
-                                    <button id="cancelCandidates" style="flex: 1; background: #ef4444; color: white; 
-                                          border: none; padding: 8px; border-radius: 4px; font-weight: bold;">إلغاء</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            }
+        }
+
+        function updateStats() {
+            const totalCandidatesCount = Object.keys(candidates).length;
+            const totalVotesCount = Object.values(candidates).reduce((sum, votes) => sum + votes, 0);
+            const totalVoteSetsCount = validVotes.length;
+            const castedVotes = totalVoteSetsCount + invalidVotesCount;
+            const manualTotal = parseInt(document.getElementById('manualTotalVotesInput').value) || 0;
+
+            document.getElementById('totalCandidates').textContent = totalCandidatesCount;
+            document.getElementById('totalVotes').textContent = manualTotal || totalVotesCount;
+            document.getElementById('totalVoteSets').textContent = totalVoteSetsCount;
+            document.getElementById('invalidVotes').textContent = invalidVotesCount;
+            document.getElementById('castedVotes').textContent = castedVotes;
+        }
+
+        // تحديث جدول المرشحين
+        function updateCandidatesTable() {
+            const tbody = document.getElementById('candidatesTableBody');
+            tbody.innerHTML = '';
+
+            const totalVotes = Object.values(candidates).reduce((sum, votes) => sum + votes, 0);
+            const sortedCandidates = Object.entries(candidates).sort((a, b) => b[1] - a[1]);
+
+            sortedCandidates.forEach(([candidateNum, votes]) => {
+                const percentage = totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(2) : 0;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${candidateNum}</td>
+                    <td>${votes}</td>
+                    <td>${percentage}%</td>
                 `;
-                document.body.appendChild(dialogTitle);
-
-                // التركيز على حقل الإدخال وتحديد المحتوى
-                setTimeout(() => {
-                    const input = document.getElementById('candidateInput');
-                    input.focus();
-                    input.select();
-                }, 100);
-
-                // إعداد الأزرار
-                document.getElementById('confirmCandidates').addEventListener('click', () => {
-                    const inputValue = document.getElementById('candidateInput').value;
-                    document.body.removeChild(dialogTitle);
-
-                    const count = parseInt(inputValue);
-                    if (!isNaN(count) && count > 0) {
-                        candidates = count;
-
-                        // الاحتفاظ بالبيانات الموجودة أثناء إعادة تهيئة القائمة
-                        initializeVotes(true);
-
-                        // إعادة حساب إجمالي الأصوات
-                        validVotesCount = 0;
-                        Object.values(votes).forEach(voteCount => {
-                            validVotesCount += voteCount;
-                        });
-                        totalVotes = validVotesCount + invalidVotesCount;
-
-                        // تحديث سجل التاريخ
-                        if (history.length > 0 && historyIndex >= 0) {
-                            history[historyIndex] = {
-                                votes: JSON.parse(JSON.stringify(votes)),
-                                totalVotes,
-                                validVotesCount,
-                                invalidVotesCount
-                            };
-                        }
-
-                        alert('تم تحديث عدد المرشحين بنجاح.');
-                    } else {
-                        alert('يرجى إدخال رقم صحيح أكبر من 0.');
-                    }
-
-                    isProcessing = false;
-                });
-
-                document.getElementById('cancelCandidates').addEventListener('click', () => {
-                    document.body.removeChild(dialogTitle);
-                    isProcessing = false;
-                });
-
-                // إغلاق مربع الحوار عند النقر خارجه
-                dialogTitle.addEventListener('click', (e) => {
-                    if (e.target === dialogTitle) {
-                        document.body.removeChild(dialogTitle);
-                        isProcessing = false;
-                    }
-                });
+                tbody.appendChild(row);
             });
+        }
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+            errorAlert.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
 
-            // إضافة الاستماع لأحداث لوحة المفاتيح
-            document.addEventListener('keydown', (e) => {
-                // أرقام من لوحة المفاتيح
-                if (e.key >= '0' && e.key <= '9') {
-                    currentBallot += e.key;
-                    renderResults();
-                }
-                // زر الإدخال للتأكيد
-                else if (e.key === 'Enter') {
-                    confirmVoteBtn.click();
-                }
-                // زر الحذف لمسح الإدخال
-                else if (e.key === 'Backspace' || e.key === 'Delete') {
-                    currentBallot = currentBallot.slice(0, -1);
-                    renderResults();
-                }
-                // زر المسافة للصوت الباطل
-                else if (e.key === ' ') {
-                    invalidVoteBtn.click();
-                }
-                // الأسهم للتنقل في التاريخ
-                else if (e.key === 'ArrowLeft' && !undoVoteBtn.disabled) {
-                    undoVoteBtn.click();
-                }
-                else if (e.key === 'ArrowRight' && !redoVoteBtn.disabled) {
-                    redoVoteBtn.click();
-                }
-            });
+        function showSuccess(message) {
+            const successAlert = document.getElementById('successAlert');
+            successAlert.textContent = message;
+            successAlert.style.display = 'block';
+            successAlert.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                successAlert.style.display = 'none';
+            }, 3000);
+        }
 
-            // تخزين تلقائي كل 5 دقائق
-            setInterval(() => {
-                if (!isProcessing && totalVotes > 0) {
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.getElementById('candidate1').focus();
+
+        }
+
+        window.onclick = function (event) {
+            const modals = document.getElementsByClassName('modal');
+            for (let modal of modals) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                    document.getElementById('candidate1').focus();
+
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                recordVote();
+            }
+            else if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                if (!document.getElementById('undoBtn').disabled) {
+                    undoLastVote();
+                }
+            }
+            else if (e.key === 'Escape') {
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (modal.style.display === 'block') {
+                        modal.style.display = 'none';
+                        document.getElementById('candidate1').focus();
+                    }
+                });
+            }
+        });
+
+
+        function setupSaveLoadButtons() {
+            const saveDataBtn = document.getElementById('saveDataBtn');
+            const loadDataBtn = document.getElementById('loadDataBtn');
+
+            if (saveDataBtn) {
+                saveDataBtn.addEventListener("click", () => {
+                    if (isProcessing) return;
+                    isProcessing = true;
+
                     try {
                         const dataToSave = {
-                            votes: votes,
-                            totalVotes: totalVotes,
-                            validVotesCount: validVotesCount,
-                            invalidVotesCount: invalidVotesCount,
-                            history: history,
-                            historyIndex: historyIndex,
                             candidates: candidates,
+                            validVotes: validVotes,
+                            invalidVotesCount: invalidVotesCount,
+                            voteHistory: voteHistory,
+                            candidatesPerVote: candidatesPerVote,
+                            timestamp: new Date().toISOString()
+                        };
+                        localStorage.setItem("voteCounterData", JSON.stringify(dataToSave));
+                        alert("تم حفظ البيانات بنجاح");
+                    } catch (error) {
+                        alert("حدث خطأ أثناء حفظ البيانات: " + error.message);
+                    }
+
+                    isProcessing = false;
+                });
+            }
+
+            if (loadDataBtn) {
+                loadDataBtn.addEventListener("click", () => {
+                    if (isProcessing) return;
+                    isProcessing = true;
+
+                    try {
+                        const data = localStorage.getItem("voteCounterData");
+                        if (data) {
+                            const parsed = JSON.parse(data);
+                            candidates = parsed.candidates || {};
+                            validVotes = parsed.validVotes || [];
+                            invalidVotesCount = parsed.invalidVotesCount || 0;
+                            voteHistory = parsed.voteHistory || [];
+                            candidatesPerVote = parsed.candidatesPerVote || 1;
+
+                            // تحديث قيمة عدد المرشحين لكل صوت
+                            const candidatesPerVoteElement = document.getElementById('candidatesPerVote');
+                            if (candidatesPerVoteElement) {
+                                candidatesPerVoteElement.value = candidatesPerVote;
+                            }
+
+                            updateVotingForm();
+                            updateStats();
+                            updateCandidatesTable();
+
+                            // تحديث حالة زر التراجع
+                            const undoBtn = document.getElementById('undoBtn');
+                            if (undoBtn) {
+                                undoBtn.disabled = voteHistory.length === 0;
+                            }
+
+                            // عرض وقت آخر حفظ
+                            if (parsed.timestamp) {
+                                const saveDate = new Date(parsed.timestamp);
+                                const formattedDate = saveDate.toLocaleString('ar-EG');
+                                alert(`تم استعادة البيانات بنجاح\nآخر حفظ: ${formattedDate}`);
+                            } else {
+                                alert("تم استعادة البيانات بنجاح");
+                            }
+                        } else {
+                            alert("لا توجد بيانات محفوظة");
+                        }
+                    } catch (error) {
+                        alert("حدث خطأ أثناء استعادة البيانات: " + error.message);
+                    }
+
+                    isProcessing = false;
+                });
+            }
+        }
+
+        // إعداد الحفظ التلقائي
+        function setupAutoSave() {
+            setInterval(() => {
+                const totalVotesCount = Object.values(candidates).reduce((sum, votes) => sum + votes, 0);
+                if (!isProcessing && totalVotesCount > 0) {
+                    try {
+                        const dataToSave = {
+                            candidates: candidates,
+                            validVotes: validVotes,
+                            invalidVotesCount: invalidVotesCount,
+                            voteHistory: voteHistory,
+                            candidatesPerVote: candidatesPerVote,
                             timestamp: new Date().toISOString()
                         };
                         localStorage.setItem("voteCounterData_auto", JSON.stringify(dataToSave));
@@ -871,43 +1584,570 @@
                         console.error("خطأ في الحفظ التلقائي: ", error);
                     }
                 }
-            }, 300000); // كل 5 دقائق
+            }, 30000);
+        }
 
-            // محاولة استعادة البيانات المخزنة تلقائياً عند التحميل
+        // تحميل البيانات عند بدء التشغيل
+        function loadDataOnStartup() {
             try {
                 const data = localStorage.getItem("voteCounterData");
                 if (data) {
                     const parsed = JSON.parse(data);
-                    votes = parsed.votes || {};
-                    totalVotes = parsed.totalVotes || 0;
-                    validVotesCount = parsed.validVotesCount || 0;
+                    candidates = parsed.candidates || {};
+                    validVotes = parsed.validVotes || [];
                     invalidVotesCount = parsed.invalidVotesCount || 0;
-                    history = parsed.history || [];
-                    historyIndex = parsed.historyIndex || -1;
+                    voteHistory = parsed.voteHistory || [];
+                    candidatesPerVote = parsed.candidatesPerVote || 1;
 
-                    if (parsed.candidates) {
-                        candidates = parsed.candidates;
+                    // تحديث قيمة عدد المرشحين لكل صوت
+                    const candidatesPerVoteElement = document.getElementById('candidatesPerVote');
+                    if (candidatesPerVoteElement) {
+                        candidatesPerVoteElement.value = candidatesPerVote;
                     }
 
-                    renderResults();
+                    // تحديث حالة زر التراجع
+                    const undoBtn = document.getElementById('undoBtn');
+                    if (undoBtn) {
+                        undoBtn.disabled = voteHistory.length === 0;
+                    }
                 }
             } catch (error) {
                 console.error("خطأ في استعادة البيانات عند التحميل: ", error);
             }
+        }
 
-            // إضافة خاصية منع إغلاق الصفحة بالخطأ
-            // إضافة خاصية منع إغلاق الصفحة بالخطأ
-            window.addEventListener('beforeunload', function (e) {
-                // إذا كان هناك أصوات مدخلة ولم يتم حفظها صراحة
-                if (totalVotes > 0 && !isProcessing) {
-                    e.preventDefault(); // لمنع السلوك الافتراضي
-                    e.returnValue = ''; // عرض رسالة تأكيد
+        // إضافة خاصية منع إغلاق الصفحة بالخطأ
+        window.addEventListener('beforeunload', function (e) {
+            const totalVotesCount = Object.values(candidates).reduce((sum, votes) => sum + votes, 0);
+            if (totalVotesCount > 0 && !isProcessing) {
+                e.preventDefault();
+                e.returnValue = 'لديك بيانات غير محفوظة. هل أنت متأكد من المغادرة؟';
+                return e.returnValue;
+            }
+        });
+
+        async function exportToPDF(event) {
+            if (event) event.preventDefault();
+
+            const exportBtn = document.getElementById('exportPdfBtn');
+            const originalText = exportBtn.innerHTML;
+
+            // تعطيل الزر وعرض مؤشر التحميل
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '⏳ جاري التصدير...';
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                // جلب البيانات
+                const totalCandidates = document.getElementById('totalCandidates').textContent;
+                const totalVotes = document.getElementById('totalVotes').textContent;
+                const totalVoteSets = document.getElementById('totalVoteSets').textContent;
+                const invalidVotes = document.getElementById('invalidVotes').textContent;
+                const manualTotal = document.getElementById('manualTotalVotesInput').value || 'غير محدد';
+                const tableBody = document.getElementById('candidatesTableBody');
+
+                const reportDate = new Date().toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                let candidatesData = [];
+                if (tableBody && tableBody.children.length > 0) {
+                    candidatesData = Array.from(tableBody.children).map(row => ({
+                        number: row.children[0].textContent,
+                        votes: row.children[1].textContent,
+                        percentage: row.children[2].textContent
+                    }));
                 }
+
+                const candidatePages = [];
+                let currentIndex = 0;
+
+                if (candidatesData.length > 0) {
+                    const firstPageCount = Math.min(7, candidatesData.length);
+                    candidatePages.push(candidatesData.slice(0, firstPageCount));
+                    currentIndex = firstPageCount;
+                }
+
+                while (currentIndex < candidatesData.length) {
+                    const nextPageCount = Math.min(14, candidatesData.length - currentIndex);
+                    candidatePages.push(candidatesData.slice(currentIndex, currentIndex + nextPageCount));
+                    currentIndex += nextPageCount;
+                }
+
+                let pageHtml = createFirstPageHTML(reportDate, totalCandidates, totalVotes, totalVoteSets, invalidVotes, candidatePages[0] || [], 1);
+                await addPageToPDF(pdf, pageHtml, true);
+
+                let serialStart = candidatePages[0] ? candidatePages[0].length + 1 : 1;
+                for (let i = 1; i < candidatePages.length; i++) {
+                    pdf.addPage();
+                    pageHtml = createCandidatesPageHTML(candidatePages[i], i + 1, candidatePages.length, serialStart);
+                    await addPageToPDF(pdf, pageHtml, false);
+                    serialStart += candidatePages[i].length;
+                }
+
+                if (candidatePages.length > 0) {
+                    pdf.addPage();
+                    pageHtml = createFinalPageHTML(reportDate);
+                    await addPageToPDF(pdf, pageHtml, false);
+                }
+
+                const fileName = `تقرير_النتائج_${new Date().toISOString().split('T')[0]}.pdf`;
+                pdf.save(fileName);
+
+                showAlert('تم تصدير التقرير بنجاح!', 'success');
+
+            } catch (error) {
+                console.error('خطأ في تصدير PDF:', error);
+                showAlert('حدث خطأ أثناء تصدير التقرير', 'error');
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalText;
+            }
+        }
+        document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+
+        async function addPageToPDF(pdf, htmlContent, isFirstPage) {
+            const container = document.createElement('div');
+            container.style.cssText = `
+                position: absolute;
+                left: -9999px;
+                top: 0;
+                width: 794px;
+                background: white;
+                padding: 40px;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                direction: rtl;
+                color: #333;
+                line-height: 1.6;
+            `;
+
+            container.innerHTML = htmlContent;
+            document.body.appendChild(container);
+
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0
             });
 
+            document.body.removeChild(container);
 
-        });
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        }
+
+        function createFirstPageHTML(reportDate, totalCandidates, totalVotes, totalVoteSets, invalidVotes, firstPageCandidates, serialStart = 1) {
+            let candidatesTableHTML = '';
+
+            if (firstPageCandidates.length > 0) {
+                candidatesTableHTML = `
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <thead>
+                            <tr style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
+                                <th style="padding: 15px; border: 1px solid #ddd; text-align: center; width: 80px;">م</th>
+                                <th style="padding: 15px; border: 1px solid #ddd; text-align: center;">رقم المرشح</th>
+                                <th style="padding: 15px; border: 1px solid #ddd; text-align: center;">عدد الأصوات</th>
+                                <th style="padding: 15px; border: 1px solid #ddd; text-align: center;">النسبة المئوية</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                firstPageCandidates.forEach((candidate, index) => {
+                    const bgColor = index % 2 === 0 ? '#f8f9ff' : 'white';
+                    candidatesTableHTML += `
+                        <tr style="background: ${bgColor};">
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #667eea;">${serialStart + index}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${candidate.number}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${candidate.votes}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${candidate.percentage}</td>
+                        </tr>
+                    `;
+                });
+
+                candidatesTableHTML += '</tbody></table>';
+            } else {
+                candidatesTableHTML = '<p style="color: #666; text-align: center; margin: 20px 0;">لا توجد نتائج متاحة حالياً</p>';
+            }
+
+            return `
+                <div style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 30px; text-align: center; border-radius: 10px; margin-bottom: 30px;">
+                    <h1 style="margin: 0; font-size: 28px;">تقرير نتائج فرز الأصوات الانتخابية</h1>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">معلومات التقرير</h2>
+                    <p><strong>تاريخ التقرير:</strong> ${reportDate}</p>
+                    <p><strong>النظام:</strong> نظام فرز الأصوات الانتخابية</p>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">الإحصائيات العامة</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                        <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea;">
+                            <strong>عدد المرشحين:</strong> ${totalCandidates}
+                        </div>
+                        <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea;">
+                            <strong>إجمالي الأصوات:</strong> ${totalVotes}
+                        </div>
+                        <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea;">
+                            <strong>الأصوات الصحيحة:</strong> ${totalVoteSets}
+                        </div>
+                        <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea;">
+                            <strong>الأصوات الباطلة:</strong> ${invalidVotes}
+                        </div>
+                        <div style="background: #f8f9ff; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea; margin-top: 15px;">
+                            <strong>الأصوات المُدلى بها:</strong> ${parseInt(totalVoteSets) + parseInt(invalidVotes)}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">نتائج المرشحين</h2>
+                    ${candidatesTableHTML}
+                </div>
+            `;
+        }
+
+        // دالة إنشاء صفحات المرشحين الإضافية
+        function createCandidatesPageHTML(candidates, pageNumber, totalPages, serialStart) {
+            let candidatesTableHTML = `
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <thead>
+                        <tr style="background: linear-gradient(45deg, #667eea, #764ba2); color: white;">
+                            <th style="padding: 15px; border: 1px solid #ddd; text-align: center; width: 80px;">م</th>
+                            <th style="padding: 15px; border: 1px solid #ddd; text-align: center;">رقم المرشح</th>
+                            <th style="padding: 15px; border: 1px solid #ddd; text-align: center;">عدد الأصوات</th>
+                            <th style="padding: 15px; border: 1px solid #ddd; text-align: center;">النسبة المئوية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            candidates.forEach((candidate, index) => {
+                const bgColor = index % 2 === 0 ? '#f8f9ff' : 'white';
+                candidatesTableHTML += `
+                    <tr style="background: ${bgColor};">
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold; color: #667eea;">${serialStart + index}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${candidate.number}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${candidate.votes}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${candidate.percentage}</td>
+                    </tr>
+                `;
+            });
+
+            candidatesTableHTML += '</tbody></table>';
+
+            return `
+                <div style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 30px;">
+                    <h1 style="margin: 0; font-size: 24px;">تكملة نتائج المرشحين - صفحة ${pageNumber}</h1>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">نتائج المرشحين (تكملة)</h2>
+                    ${candidatesTableHTML}
+                </div>
+
+                <div style="text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 40px;">
+                    <p>صفحة ${pageNumber} من ${totalPages}</p>
+                </div>
+            `;
+        }
+
+        // دالة إنشاء الصفحة النهائية
+        function createFinalPageHTML(reportDate) {
+            return `
+                <div style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 30px;">
+                    <h1 style="margin: 0; font-size: 24px;">الملاحظات والتوقيعات</h1>
+                </div>
+
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">ملاحظات</h2>
+                    <ul style="color: #666; padding-right: 20px;">
+                        <li>تم إنشاء هذا التقرير آلياً من نظام فرز الأصوات الانتخابية</li>
+                        <li>يُرجى مراجعة البيانات والتأكد من صحتها قبل الاعتماد عليها</li>
+                    </ul>
+                </div>
+
+                <div style="margin-bottom: 50px;">
+                    <h2 style="color: #667eea; border-bottom: 3px solid #667eea; padding-bottom: 10px;">التوقيعات</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px;">
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 2px solid #333; width: 200px; margin: 40px auto 10px;"></div>
+                            <p><strong>رئيس اللجنة</strong></p>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 2px solid #333; width: 200px; margin: 40px auto 10px;"></div>
+                            <p><strong>أمين اللجنة</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 40px;">
+                    <p>تم إنشاء هذا التقرير في ${reportDate}</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <p style="font-size: 1.1rem; color: #444;">
+                        <span>إهداء من المستشار <strong>محمد الحمراوي</strong>، وكيل النيابة الإدارية، للسادة الأعضاء</span>
+                    </p>
+                </div>
+            `;
+        }
     </script>
+    <script>
+        // متغيرات QR Code
+        let qrScanner = null;
+        let scannedData = null;
+        let isScanning = false;
+
+        // إظهار modal إنهاء الفرز
+        function showFinishModal() {
+            if (Object.keys(candidates).length === 0) {
+                alert('لا توجد بيانات للإنهاء');
+                return;
+            }
+
+            // إنشاء بيانات QR
+            const qrData = {
+                timestamp: new Date().toISOString(),
+                candidates: candidates,
+                validVotes: validVotes,
+                invalidVotesCount: invalidVotesCount,
+                totalVoteSets: validVotes.length,
+                candidatesPerVote: parseInt(document.getElementById('candidatesPerVote').value),
+                committeeInfo: {
+                    totalRegistered: parseInt(document.getElementById('manualTotalVotesInput').value) || 0,
+                    castedVotes: validVotes.length + invalidVotesCount
+                }
+            };
+
+            // إنشاء QR Code
+            const canvas = document.getElementById('qrCanvas');
+            const qr = new QRious({
+                element: canvas,
+                value: JSON.stringify(qrData),
+                size: 300,
+                level: 'M'
+            });
+
+            // عرض ملخص البيانات
+            const summary = `
+            عدد المرشحين: ${Object.keys(candidates).length}<br>
+            الأصوات الصحيحة: ${validVotes.length}<br>
+            الأصوات الباطلة: ${invalidVotesCount}<br>
+            إجمالي الأصوات المُدلى بها: ${validVotes.length + invalidVotesCount}<br>
+            وقت الإنشاء: ${new Date().toLocaleString('ar-EG')}
+        `;
+            document.getElementById('qrSummary').innerHTML = summary;
+
+            document.getElementById('finishModal').style.display = 'block';
+        }
+
+        // تحميل QR Code كصورة
+        function downloadQR() {
+            const canvas = document.getElementById('qrCanvas');
+            const link = document.createElement('a');
+            link.download = `voting-results-${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // إظهار ماسح QR
+        function showQRScannerModal() {
+            document.getElementById('qrScannerModal').style.display = 'block';
+            startQRScanner();
+        }
+
+        // بدء ماسح QR
+        async function startQRScanner() {
+            if (isScanning) return;
+
+            try {
+                const video = document.getElementById('qrVideo');
+                const canvas = document.getElementById('qrScanCanvas');
+                const context = canvas.getContext('2d');
+                const statusDiv = document.getElementById('scanStatus');
+
+                // طلب إذن الكاميرا
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment' // الكاميرا الخلفية
+                    }
+                });
+
+                video.srcObject = stream;
+                isScanning = true;
+                statusDiv.textContent = 'جاري البحث عن QR Code...';
+
+                // مسح QR Code كل 500ms
+                const scanInterval = setInterval(() => {
+                    if (!isScanning) {
+                        clearInterval(scanInterval);
+                        return;
+                    }
+
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+
+                    if (qrCode && qrCode.data) {
+                        try {
+                            scannedData = JSON.parse(qrCode.data);
+                            displayScannedData(scannedData);
+                            clearInterval(scanInterval);
+                            stopCamera(stream);
+                        } catch (e) {
+                            statusDiv.textContent = 'QR Code غير صالح، جاري المحاولة مرة أخرى...';
+                        }
+                    }
+                }, 500);
+
+            } catch (error) {
+                document.getElementById('scanStatus').textContent = 'خطأ في تشغيل الكاميرا: ' + error.message;
+                console.error('Camera error:', error);
+            }
+        }
+
+        // إيقاف الكاميرا
+        function stopCamera(stream) {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            isScanning = false;
+        }
+
+        // عرض البيانات المسحة
+        function displayScannedData(data) {
+            const resultDiv = document.getElementById('scanResult');
+            const statusDiv = document.getElementById('scanStatus');
+            const mergeBtn = document.getElementById('mergeDataBtn');
+
+            statusDiv.textContent = 'تم قراءة QR Code بنجاح!';
+
+            const summary = `
+        <strong>بيانات مقروءة من QR Code:</strong><br>
+        عدد المرشحين: ${Object.keys(data.candidates || {}).length}<br>
+        الأصوات الصحيحة: ${data.totalVoteSets || 0}<br>
+        الأصوات الباطلة: ${data.invalidVotesCount || 0}<br>
+        وقت الإنتاج: ${new Date(data.timestamp).toLocaleString('ar-EG')}<br>
+        <small style="color: #666;">اضغط "دمج البيانات" لإضافتها للنتائج الحالية</small>
+    `;
+
+            resultDiv.innerHTML = summary;
+            resultDiv.style.display = 'block';
+            mergeBtn.style.display = 'inline-block';
+        }
+
+        // دمج البيانات المسحة
+        function mergeScannedData() {
+            if (!scannedData) {
+                alert('لا توجد بيانات للدمج');
+                return;
+            }
+
+            if (!confirm('هل أنت متأكد من دمج هذه البيانات مع النتائج الحالية؟')) {
+                return;
+            }
+
+            try {
+                // دمج بيانات المرشحين
+                Object.keys(scannedData.candidates || {}).forEach(candidateId => {
+                    const votes = scannedData.candidates[candidateId];
+                    if (candidates[candidateId]) {
+                        candidates[candidateId] += votes;
+                    } else {
+                        candidates[candidateId] = votes;
+                    }
+                });
+
+                // دمج الأصوات الصحيحة
+                if (scannedData.validVotes && Array.isArray(scannedData.validVotes)) {
+                    validVotes.push(...scannedData.validVotes);
+                }
+
+                // دمج الأصوات الباطلة
+                invalidVotesCount += (scannedData.invalidVotesCount || 0);
+
+                // إضافة إلى تاريخ التصويت
+                voteHistory.push({
+                    type: 'merge',
+                    timestamp: new Date().toISOString(),
+                    source: 'QR Code',
+                    data: scannedData
+                });
+
+                // تحديث الواجهة
+                updateStats();
+                updateCandidatesTable();
+
+                // إغلاق النافذة وإظهار رسالة نجاح
+                closeQRScanner();
+                showSuccess(`تم دمج البيانات بنجاح! تمت إضافة ${scannedData.totalVoteSets || 0} صوت صحيح و ${scannedData.invalidVotesCount || 0} صوت باطل`);
+
+            } catch (error) {
+                alert('حدث خطأ أثناء دمج البيانات: ' + error.message);
+                console.error('Merge error:', error);
+            }
+        }
+
+        // إغلاق ماسح QR
+        function closeQRScanner() {
+            isScanning = false;
+            const video = document.getElementById('qrVideo');
+            if (video && video.srcObject) {
+                stopCameraa(video.srcObject);
+                video.srcObject = null;
+            }
+
+            document.getElementById('scanStatus').textContent = 'جاري تشغيل الكاميرا...';
+            document.getElementById('scanResult').style.display = 'none';
+            document.getElementById('mergeDataBtn').style.display = 'none';
+            scannedData = null;
+
+            // أغلق النافذة
+            const modal = document.getElementById('qrScannerModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function stopCameraa(stream) {
+            if (!stream) return;
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+
+        // إعادة تعريف closeModal مع الاحتفاظ بالأصل
+        const originalCloseModal = typeof closeModal !== 'undefined' ? closeModal : () => { };
+        closeModal = function (modalId) {
+            if (modalId === 'qrScannerModal') {
+                closeQRScanner();
+            } else {
+                originalCloseModal(modalId);
+            }
+        };
+
+    </script>
+
 </body>
 
 </html>
